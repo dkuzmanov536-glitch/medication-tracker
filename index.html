@@ -1387,38 +1387,52 @@ function toggleNotif(el) {
   localStorage.setItem('settings_v3', JSON.stringify(settings));
 }
 
-async function sendEmailViaFormspree(subject, message) {
+function sendEmailViaFormspree(subject, message) {
   const email = settings.email;
   const formId = settings.formspreeId;
 
   if (!email) { showToast('Напиши имейл в настройките!', 'error'); return false; }
   if (!formId || formId === 'YOUR_FORM_ID') { showToast('Добави Formspree ID в настройките!', 'error'); return false; }
 
-  const url = `https://formspree.io/f/${formId}`;
+  // Create hidden iframe to receive response (avoids page redirect)
+  const iframeName = 'formspree_iframe_' + Date.now();
+  const iframe = document.createElement('iframe');
+  iframe.name = iframeName;
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: email,
-        _replyto: email,
-        _subject: subject,
-        message: message
-      })
-    });
+  // Create a temporary form
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `https://formspree.io/f/${formId}`;
+  form.target = iframeName;
+  form.style.display = 'none';
 
-    if (res.ok) {
-      showToast('📧 Имейлът е изпратен!', 'success');
-      return true;
-    } else {
-      showToast('Грешка при изпращане. Провери Formspree ID.', 'error');
-      return false;
-    }
-  } catch (e) {
-    showToast('Мрежова грешка при изпращане.', 'error');
-    return false;
+  const fields = {
+    email: email,
+    _replyto: email,
+    _subject: subject,
+    message: message
+  };
+
+  for (const [key, val] of Object.entries(fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = val;
+    form.appendChild(input);
   }
+
+  document.body.appendChild(form);
+  form.submit();
+
+  setTimeout(() => {
+    document.body.removeChild(form);
+    document.body.removeChild(iframe);
+  }, 5000);
+
+  showToast('📧 Имейлът е изпратен!', 'success');
+  return true;
 }
 
 function sendTestEmail() {
