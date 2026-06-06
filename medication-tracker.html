@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>МедиАлерт — Следене на лекарства</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2128;
+    --card: #1e2430;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --accent: #58a6ff;
+    --accent2: #1f6feb;
+    --green: #3fb950;
+    --green-bg: rgba(63,185,80,0.12);
+    --red: #f85149;
+    --red-bg: rgba(248,81,73,0.12);
+    --amber: #d29922;
+    --amber-bg: rgba(210,153,34,0.12);
+    --purple: #bc8cff;
+    --purple-bg: rgba(188,140,255,0.12);
+    --teal: #39d353;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .time-display {
+    font-size: 13px;
+    color: var(--text2);
+    background: var(--bg3);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  /* Layout */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
+  }
+
+  .left-col { display: flex; flex-direction: column; gap: 1.5rem; }
+  .right-col { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .icon {
+    width: 28px; height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Med list */
+  .med-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .med-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+  }
+
+  .med-item.active::before { background: var(--green); }
+  .med-item.taken::before { background: var(--text3); }
+  .med-item.overdue::before { background: var(--red); }
+  .med-item.upcoming::before { background: var(--amber); }
+
+  .med-item:hover {
+    border-color: var(--border2);
+    transform: translateX(2px);
+  }
+
+  .med-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .med-info { flex: 1; min-width: 0; }
+
+  .med-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .med-dose {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 4px;
+  }
+
+  .med-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .time-pill {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .time-pill.done {
+    background: rgba(139,148,158,0.15);
+    color: var(--text3);
+    text-decoration: line-through;
+  }
+
+  .time-pill.pending {
+    background: rgba(88,166,255,0.15);
+    color: var(--accent);
+  }
+
+  .time-pill.overdue {
+    background: var(--red-bg);
+    color: var(--red);
+  }
+
+  .time-pill.next {
+    background: var(--amber-bg);
+    color: var(--amber);
+  }
+
+  .med-until {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 3px;
+  }
+
+  .med-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .btn-icon {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    background: transparent;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 15px;
+    transition: all 0.15s;
+  }
+
+  .btn-icon:hover { border-color: var(--border2); color: var(--text); background: var(--bg3); }
+  .btn-icon.danger:hover { border-color: var(--red); color: var(--red); background: var(--red-bg); }
+  .btn-icon.success:hover { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+
+  /* Taken mark */
+  .taken-badge {
+    background: rgba(139,148,158,0.12);
+    border: 1px solid rgba(139,148,158,0.2);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* Add form */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  input, select, textarea {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(31,111,235,0.2);
+  }
+
+  input::placeholder { color: var(--text3); }
+
+  select option { background: var(--bg2); }
+
+  .times-builder {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .times-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .times-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 28px;
+    padding: 6px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .time-tag {
+    background: rgba(88,166,255,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(88,166,255,0.25);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  .time-tag span { font-size: 14px; color: rgba(88,166,255,0.6); }
+
+  /* Buttons */
+  .btn {
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary {
+    background: var(--accent2);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #388bfd; transform: translateY(-1px); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-secondary {
+    background: var(--bg3);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--border2); color: var(--text); }
+
+  .btn-success {
+    background: rgba(63,185,80,0.15);
+    color: var(--green);
+    border: 1px solid rgba(63,185,80,0.3);
+  }
+  .btn-success:hover { background: rgba(63,185,80,0.25); }
+
+  .btn-danger {
+    background: var(--red-bg);
+    color: var(--red);
+    border: 1px solid rgba(248,81,73,0.3);
+  }
+  .btn-danger:hover { background: rgba(248,81,73,0.25); }
+
+  /* Notification settings */
+  .notify-section { margin-top: 1rem; }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toggle-row:last-child { border-bottom: none; }
+
+  .toggle-label { font-size: 14px; color: var(--text); }
+  .toggle-sub { font-size: 12px; color: var(--text2); }
+
+  .toggle {
+    width: 44px; height: 24px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle.on { background: var(--accent2); border-color: var(--accent2); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform 0.2s;
+  }
+
+  .toggle.on::after { transform: translateX(20px); }
+
+  /* Upcoming widget */
+  .upcoming-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .upcoming-item:last-child { border-bottom: none; }
+
+  .upcoming-time {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--amber);
+    min-width: 52px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .upcoming-info { flex: 1; }
+  .upcoming-name { font-size: 14px; font-weight: 500; }
+  .upcoming-dose { font-size: 12px; color: var(--text2); }
+
+  .upcoming-countdown {
+    font-size: 11px;
+    color: var(--text3);
+    text-align: right;
+  }
+
+  /* History */
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .history-item:last-child { border-bottom: none; }
+
+  .history-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    width: 480px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal { transform: scale(1); }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+  }
+
+  /* Alert */
+  .alert {
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .alert-info { background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.2); color: var(--accent); }
+  .alert-success { background: var(--green-bg); border: 1px solid rgba(63,185,80,0.2); color: var(--green); }
+  .alert-warning { background: var(--amber-bg); border: 1px solid rgba(210,153,34,0.2); color: var(--amber); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text3);
+  }
+
+  .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+  .empty-state p { font-size: 14px; }
+
+  /* Section divider */
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Progress ring */
+  .progress-ring {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
+
+  .progress-ring svg { transform: rotate(-90deg); }
+
+  .progress-ring .label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    transform: rotate(0deg);
+  }
+
+  /* Emoji picker colors */
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .emoji-btn {
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .emoji-btn:hover, .emoji-btn.selected {
+    border-color: var(--accent);
+    background: rgba(88,166,255,0.1);
+    transform: scale(1.1);
+  }
+
+  /* Color dots */
+  .color-dots {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .color-dot {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .color-dot.selected { transform: scale(1.2); border-color: #fff; }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9999;
+  }
+
+  .toast {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    max-width: 320px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: slideIn 0.3s ease;
+    color: var(--text);
+  }
+
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.error { border-left: 3px solid var(--red); }
+  .toast.info { border-left: 3px solid var(--accent); }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes fadeOut {
+    to { transform: translateX(100%); opacity: 0; }
+  }
+
+  /* Responsive */
+  @media (max-width: 800px) {
+    .main { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .header { padding: 0 1rem; }
+    .main { padding: 1rem; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* formspree hidden */
+  .formspree-form { display: none; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">💊</div>
+    <span class="logo-text">Меди<span>Алерт</span></span>
+  </div>
+  <div class="header-right">
+    <div class="time-display" id="liveTime"></div>
+    <button class="btn btn-primary" onclick="openModal()">+ Добави лекарство</button>
+  </div>
+</header>
+
+<main class="main">
+  <div class="left-col">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-number" id="statTotal" style="color: var(--accent)">0</div>
+        <div class="stat-label">Активни</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statTaken" style="color: var(--green)">0</div>
+        <div class="stat-label">Взети днес</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statMissed" style="color: var(--red)">0</div>
+        <div class="stat-label">Пропуснати</div>
+      </div>
+    </div>
+
+    <!-- Active medications -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon" style="background: var(--green-bg); color: var(--green)">🟢</div>
+          Активни лекарства
+        </div>
+        <button class="btn btn-secondary" onclick="filterMeds('active')" style="font-size:12px;padding:5px 12px">Активни</button>
+      </div>
+      <div id="medsActive"></div>
+    </div>
+
+    <!-- Taken/expired medications -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon" style="background: rgba(139,148,158,0.15); color: var(--text3)">✅</div>
+          Изпити / изтекли лекарства
+        </div>
+      </div>
+      <div id="medsTaken"></div>
+    </div>
+
+    <!-- Notification form (hidden, used by Formspree) -->
+    <form class="formspree-form" id="notifyForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+      <input type="hidden" name="_subject" id="notifySubject">
+      <input type="hidden" name="message" id="notifyMessage">
+      <input type="hidden" name="email" id="notifyEmail">
+      <input type="hidden" name="_replyto" id="notifyReplyTo">
+    </form>
+
+  </div>
+
+  <div class="right-col">
+
+    <!-- Today's schedule -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon" style="background: var(--amber-bg); color: var(--amber)">⏰</div>
+          Предстои днес
+        </div>
+        <div id="todayDate" style="font-size:12px; color:var(--text3)"></div>
+      </div>
+      <div id="upcomingList"></div>
+    </div>
+
+    <!-- Notification settings -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon" style="background: var(--purple-bg); color: var(--purple)">🔔</div>
+          Известия (Gmail)
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        <span>ℹ️</span>
+        <div>Попълни имейл и Formspree ID за да получаваш напомняния по Gmail.</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Твоят имейл</label>
+        <input type="email" id="userEmail" placeholder="example@gmail.com" oninput="saveSettings()">
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Formspree Form ID</label>
+        <input type="text" id="formspreeId" placeholder="xyzabcde" oninput="saveSettings()">
+        <div style="font-size:11px; color:var(--text3); margin-top:3px">
+          Регистрирай се на <a href="https://formspree.io" target="_blank" style="color:var(--accent)">formspree.io</a> → Create Form → copy ID
+        </div>
+      </div>
+
+      <div class="notify-section">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Напомняне 15 мин. преди</div>
+            <div class="toggle-sub">Имейл 15 минути преди дозата</div>
+          </div>
+          <div class="toggle on" id="toggle15" onclick="toggleNotif(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Напомняне в точния час</div>
+            <div class="toggle-sub">Имейл точно в часа на дозата</div>
+          </div>
+          <div class="toggle on" id="toggleExact" onclick="toggleNotif(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Тест имейл</div>
+            <div class="toggle-sub">Изпрати тест веднага</div>
+          </div>
+          <button class="btn btn-secondary" onclick="sendTestEmail()" style="font-size:12px;padding:5px 12px">Изпрати тест</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="icon" style="background: rgba(88,166,255,0.1); color: var(--accent)">📋</div>
+          История (днес)
+        </div>
+        <button class="btn-icon" onclick="clearHistory()" title="Изчисти историята">🗑</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Add Medication Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">💊 Добави лекарство</div>
+      <button class="btn-icon" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Избери иконка</label>
+        <div class="emoji-grid" id="emojiGrid"></div>
+      </div>
+
+      <div class="form-group full">
+        <label>Наименование на лекарството *</label>
+        <input type="text" id="medName" placeholder="напр. Парацетамол, Аспирин...">
+      </div>
+
+      <div class="form-group">
+        <label>Доза</label>
+        <input type="text" id="medDose" placeholder="напр. 500mg, 1 таблетка">
+      </div>
+
+      <div class="form-group">
+        <label>Форма</label>
+        <select id="medType">
+          <option value="таблетка">💊 Таблетка</option>
+          <option value="капсула">🔴 Капсула</option>
+          <option value="сироп">🥤 Сироп</option>
+          <option value="инжекция">💉 Инжекция</option>
+          <option value="капки">💧 Капки</option>
+          <option value="крем">🧴 Крем</option>
+          <option value="инхалатор">🌬 Инхалатор</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Начало на лечението</label>
+        <input type="date" id="medStart">
+      </div>
+
+      <div class="form-group">
+        <label>Край на лечението</label>
+        <input type="date" id="medEnd">
+      </div>
+
+      <div class="form-group full">
+        <label>Часове на приемане *</label>
+        <div class="times-builder">
+          <div class="times-row">
+            <input type="time" id="timeInput" style="flex:1">
+            <button class="btn btn-secondary" onclick="addTime()" style="padding:9px 14px">+ Добави час</button>
+          </div>
+          <div class="times-list" id="timesList">
+            <span style="font-size:12px; color:var(--text3); padding: 4px 2px">Добави часове на приемане...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <label>Бележки (по желание)</label>
+        <textarea id="medNotes" rows="2" placeholder="напр. Взимай с храна, Не смесвай с алкохол..."></textarea>
+      </div>
+
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:1.25rem; justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Отказ</button>
+      <button class="btn btn-primary" onclick="addMedication()">💾 Запази лекарството</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let medications = JSON.parse(localStorage.getItem('meds_v3') || '[]');
+let history = JSON.parse(localStorage.getItem('history_v3') || '[]');
+let settings = JSON.parse(localStorage.getItem('settings_v3') || '{"email":"","formspreeId":"","notif15":true,"notifExact":true}');
+let selectedTimes = [];
+let selectedEmoji = '💊';
+
+const EMOJIS = ['💊','🔴','🟡','🟢','🔵','🩷','💉','🌡','🧴','💧','🥤','🌿','⚕️','🩺','🫁','❤️'];
+const COLORS = ['#58a6ff','#3fb950','#d29922','#f85149','#bc8cff','#39d353'];
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  document.getElementById('userEmail').value = settings.email || '';
+  document.getElementById('formspreeId').value = settings.formspreeId || '';
+  if (!settings.notif15) document.getElementById('toggle15').classList.remove('on');
+  if (!settings.notifExact) document.getElementById('toggleExact').classList.remove('on');
+
+  buildEmojiGrid();
+  setDefaultDates();
+  updateTime();
+  setInterval(updateTime, 1000);
+  setInterval(checkReminders, 30000);
+
+  renderAll();
+  updateStats();
+  renderUpcoming();
+  renderHistory();
+  updateTodayDate();
+}
+
+function buildEmojiGrid() {
+  const grid = document.getElementById('emojiGrid');
+  grid.innerHTML = EMOJIS.map(e => `
+    <button class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" onclick="selectEmoji('${e}')">${e}</button>
+  `).join('');
+}
+
+function selectEmoji(e) {
+  selectedEmoji = e;
+  buildEmojiGrid();
+}
+
+function setDefaultDates() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('medStart').value = today;
+}
+
+function updateTime() {
+  const now = new Date();
+  document.getElementById('liveTime').textContent = now.toLocaleTimeString('bg-BG', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function updateTodayDate() {
+  const today = new Date().toLocaleDateString('bg-BG', {weekday:'long', day:'numeric', month:'long'});
+  document.getElementById('todayDate').textContent = today;
+}
+
+function saveSettings() {
+  settings.email = document.getElementById('userEmail').value;
+  settings.formspreeId = document.getElementById('formspreeId').value;
+  localStorage.setItem('settings_v3', JSON.stringify(settings));
+}
+
+function saveMeds() {
+  localStorage.setItem('meds_v3', JSON.stringify(medications));
+}
+
+function saveHistory() {
+  localStorage.setItem('history_v3', JSON.stringify(history));
+}
+
+// ============================================================
+// TIME MANAGEMENT
+// ============================================================
+function addTime() {
+  const t = document.getElementById('timeInput').value;
+  if (!t) { showToast('Избери час!', 'error'); return; }
+  if (selectedTimes.includes(t)) { showToast('Този час вече е добавен!', 'error'); return; }
+  selectedTimes.push(t);
+  selectedTimes.sort();
+  renderTimesList();
+  document.getElementById('timeInput').value = '';
+}
+
+function removeTime(t) {
+  selectedTimes = selectedTimes.filter(x => x !== t);
+  renderTimesList();
+}
+
+function renderTimesList() {
+  const el = document.getElementById('timesList');
+  if (selectedTimes.length === 0) {
+    el.innerHTML = '<span style="font-size:12px; color:var(--text3); padding: 4px 2px">Добави часове на приемане...</span>';
+    return;
+  }
+  el.innerHTML = selectedTimes.map(t => `
+    <div class="time-tag" onclick="removeTime('${t}')">
+      ⏰ ${t} <span>×</span>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// ADD / DELETE MEDICATION
+// ============================================================
+function addMedication() {
+  const name = document.getElementById('medName').value.trim();
+  if (!name) { showToast('Напиши наименование на лекарството!', 'error'); return; }
+  if (selectedTimes.length === 0) { showToast('Добави поне един час!', 'error'); return; }
+
+  const med = {
+    id: Date.now(),
+    name,
+    dose: document.getElementById('medDose').value.trim() || '1 доза',
+    type: document.getElementById('medType').value,
+    start: document.getElementById('medStart').value,
+    end: document.getElementById('medEnd').value,
+    times: [...selectedTimes],
+    notes: document.getElementById('medNotes').value.trim(),
+    emoji: selectedEmoji,
+    takenToday: {},
+    active: true,
+    addedAt: new Date().toISOString()
+  };
+
+  medications.push(med);
+  saveMeds();
+  closeModal();
+  renderAll();
+  updateStats();
+  renderUpcoming();
+  showToast(`✅ ${name} добавено успешно!`, 'success');
+  addToHistory(`Добавено: ${name} (${med.times.join(', ')})`, 'info');
+}
+
+function deleteMedication(id) {
+  const med = medications.find(m => m.id === id);
+  if (!med) return;
+  if (!confirm(`Изтрий "${med.name}"?`)) return;
+  medications = medications.filter(m => m.id !== id);
+  saveMeds();
+  renderAll();
+  updateStats();
+  renderUpcoming();
+  showToast(`🗑 ${med.name} изтрито`, 'info');
+  addToHistory(`Изтрито: ${med.name}`, 'warning');
+}
+
+function markTaken(medId, time) {
+  const med = medications.find(m => m.id === medId);
+  if (!med) return;
+  const today = getTodayKey();
+  if (!med.takenToday) med.takenToday = {};
+  if (!med.takenToday[today]) med.takenToday[today] = [];
+  if (!med.takenToday[today].includes(time)) {
+    med.takenToday[today].push(time);
+    saveMeds();
+    renderAll();
+    updateStats();
+    renderUpcoming();
+    showToast(`💊 ${med.name} @ ${time} — отбелязано!`, 'success');
+    addToHistory(`Взето: ${med.name} @ ${time}`, 'success');
+  }
+}
+
+function markFinished(id) {
+  const med = medications.find(m => m.id === id);
+  if (!med) return;
+  med.active = false;
+  med.finishedAt = new Date().toISOString();
+  saveMeds();
+  renderAll();
+  updateStats();
+  renderUpcoming();
+  showToast(`✅ ${med.name} отбелязано като изпито`, 'success');
+  addToHistory(`Изпито: ${med.name}`, 'success');
+}
+
+function reactivate(id) {
+  const med = medications.find(m => m.id === id);
+  if (!med) return;
+  med.active = true;
+  med.finishedAt = null;
+  saveMeds();
+  renderAll();
+  updateStats();
+  renderUpcoming();
+  showToast(`↩ ${med.name} реактивирано`, 'info');
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function getTodayKey() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function isTakenToday(med, time) {
+  const today = getTodayKey();
+  return med.takenToday && med.takenToday[today] && med.takenToday[today].includes(time);
+}
+
+function isExpired(med) {
+  if (!med.end) return false;
+  return new Date(med.end) < new Date(new Date().toDateString());
+}
+
+function getTimePillClass(time, med) {
+  if (isTakenToday(med, time)) return 'done';
+  const now = new Date();
+  const [h, m] = time.split(':').map(Number);
+  const medTime = new Date();
+  medTime.setHours(h, m, 0, 0);
+  const diff = medTime - now;
+  if (diff < -3600000) return 'overdue';
+  if (diff < 900000 && diff > 0) return 'next';
+  return 'pending';
+}
+
+function renderAll() {
+  const today = getTodayKey();
+  let activeHtml = '';
+  let takenHtml = '';
+
+  const activeMeds = medications.filter(m => m.active && !isExpired(m));
+  const takenMeds = medications.filter(m => !m.active || isExpired(m));
+
+  if (activeMeds.length === 0) {
+    activeHtml = `<div class="empty-state"><div class="icon">💊</div><p>Няма активни лекарства.<br>Добави ново с бутона горе.</p></div>`;
+  } else {
+    activeMeds.forEach(med => {
+      const allTaken = med.times.every(t => isTakenToday(med, t));
+      const timePills = med.times.map(t => {
+        const cls = getTimePillClass(t, med);
+        const taken = isTakenToday(med, t);
+        return `<span class="time-pill ${cls}" onclick="${taken ? '' : `markTaken(${med.id},'${t}')`}" style="${taken ? '' : 'cursor:pointer'}" title="${taken ? 'Взето' : 'Кликни за взето'}">
+          ${taken ? '✓' : '⏰'} ${t}
+        </span>`;
+      }).join('');
+
+      const endLabel = med.end ? `до ${new Date(med.end).toLocaleDateString('bg-BG')}` : 'без краен срок';
+
+      activeHtml += `
+        <div class="med-item ${allTaken ? 'taken' : 'active'}">
+          <div class="med-icon" style="background:rgba(88,166,255,0.1)">${med.emoji}</div>
+          <div class="med-info">
+            <div class="med-name">${med.name} ${allTaken ? '<span class="taken-badge">✓ днес</span>' : ''}</div>
+            <div class="med-dose">${med.dose} · ${med.type}</div>
+            <div class="med-times">${timePills}</div>
+            <div class="med-until">📅 ${endLabel}${med.notes ? ` · 📝 ${med.notes}` : ''}</div>
+          </div>
+          <div class="med-actions">
+            <button class="btn-icon success" onclick="markFinished(${med.id})" title="Отбележи като изпито">✓</button>
+            <button class="btn-icon danger" onclick="deleteMedication(${med.id})" title="Изтрий">✕</button>
+          </div>
+        </div>`;
+    });
+  }
+
+  if (takenMeds.length === 0) {
+    takenHtml = `<div class="empty-state" style="padding:1.5rem"><p style="font-size:13px; color:var(--text3)">Няма изпити или изтекли лекарства</p></div>`;
+  } else {
+    takenMeds.forEach(med => {
+      const reason = isExpired(med) ? `Изтекъл срок (${new Date(med.end).toLocaleDateString('bg-BG')})` : 'Изпито';
+      takenHtml += `
+        <div class="med-item taken" style="opacity:0.65">
+          <div class="med-icon" style="background:rgba(139,148,158,0.1); filter:grayscale(1)">${med.emoji}</div>
+          <div class="med-info">
+            <div class="med-name" style="text-decoration:line-through; color:var(--text2)">${med.name}</div>
+            <div class="med-dose">${med.dose} · ${med.type}</div>
+            <div style="font-size:11px; color:var(--text3); margin-top:3px">🏁 ${reason}</div>
+          </div>
+          <div class="med-actions">
+            <button class="btn-icon" onclick="reactivate(${med.id})" title="Реактивирай" style="font-size:12px">↩</button>
+            <button class="btn-icon danger" onclick="deleteMedication(${med.id})" title="Изтрий">✕</button>
+          </div>
+        </div>`;
+    });
+  }
+
+  document.getElementById('medsActive').innerHTML = activeHtml;
+  document.getElementById('medsTaken').innerHTML = takenHtml;
+}
+
+function updateStats() {
+  const activeMeds = medications.filter(m => m.active && !isExpired(m));
+  const today = getTodayKey();
+
+  let takenCount = 0;
+  let missedCount = 0;
+  const now = new Date();
+
+  activeMeds.forEach(med => {
+    med.times.forEach(t => {
+      if (isTakenToday(med, t)) {
+        takenCount++;
+      } else {
+        const [h, m] = t.split(':').map(Number);
+        const medTime = new Date();
+        medTime.setHours(h, m, 0, 0);
+        if (medTime < now) missedCount++;
+      }
+    });
+  });
+
+  document.getElementById('statTotal').textContent = activeMeds.length;
+  document.getElementById('statTaken').textContent = takenCount;
+  document.getElementById('statMissed').textContent = missedCount;
+}
+
+function renderUpcoming() {
+  const el = document.getElementById('upcomingList');
+  const activeMeds = medications.filter(m => m.active && !isExpired(m));
+  const now = new Date();
+
+  let items = [];
+  activeMeds.forEach(med => {
+    med.times.forEach(t => {
+      if (isTakenToday(med, t)) return;
+      const [h, m] = t.split(':').map(Number);
+      const medTime = new Date();
+      medTime.setHours(h, m, 0, 0);
+      const diff = medTime - now;
+      items.push({ med, time: t, diff, medTime });
+    });
+  });
+
+  items.sort((a, b) => a.diff - b.diff);
+
+  if (items.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:1.5rem;color:var(--text3);font-size:13px">🎉 Всички дози за днес са взети!</div>`;
+    return;
+  }
+
+  el.innerHTML = items.slice(0, 8).map(({ med, time, diff }) => {
+    const countdown = diff < 0
+      ? `<span style="color:var(--red)">Закъсняло!</span>`
+      : diff < 3600000
+        ? `<span style="color:var(--amber)">след ${Math.round(diff/60000)} мин.</span>`
+        : `<span style="color:var(--text3)">след ${Math.round(diff/3600000)}ч.</span>`;
+
+    return `
+      <div class="upcoming-item" onclick="markTaken(${med.id},'${time}')" style="cursor:pointer" title="Кликни за взето">
+        <div class="upcoming-time">${time}</div>
+        <div style="font-size:20px">${med.emoji}</div>
+        <div class="upcoming-info">
+          <div class="upcoming-name">${med.name}</div>
+          <div class="upcoming-dose">${med.dose}</div>
+        </div>
+        <div class="upcoming-countdown">${countdown}</div>
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function addToHistory(text, type) {
+  const now = new Date();
+  history.unshift({
+    text,
+    type,
+    time: now.toLocaleTimeString('bg-BG', {hour:'2-digit', minute:'2-digit'}),
+    date: now.toISOString().split('T')[0]
+  });
+  if (history.length > 100) history = history.slice(0, 100);
+  saveHistory();
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  const today = new Date().toISOString().split('T')[0];
+  const todayItems = history.filter(h => h.date === today);
+
+  if (todayItems.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:1rem;color:var(--text3);font-size:12px">Нняма записи за днес</div>`;
+    return;
+  }
+
+  const colorMap = {
+    success: 'var(--green)',
+    info: 'var(--accent)',
+    warning: 'var(--amber)',
+    error: 'var(--red)'
+  };
+
+  el.innerHTML = todayItems.slice(0, 15).map(h => `
+    <div class="history-item">
+      <div class="history-dot" style="background:${colorMap[h.type] || 'var(--text3)'}"></div>
+      <div style="flex:1; font-size:13px; color:var(--text2)">${h.text}</div>
+      <div style="font-size:11px; color:var(--text3)">${h.time}</div>
+    </div>
+  `).join('');
+}
+
+function clearHistory() {
+  if (!confirm('Изчисти цялата история?')) return;
+  history = [];
+  saveHistory();
+  renderHistory();
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal() {
+  selectedTimes = [];
+  selectedEmoji = '💊';
+  document.getElementById('medName').value = '';
+  document.getElementById('medDose').value = '';
+  document.getElementById('medNotes').value = '';
+  document.getElementById('medEnd').value = '';
+  buildEmojiGrid();
+  setDefaultDates();
+  renderTimesList();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+// ============================================================
+// NOTIFICATIONS via Formspree
+// ============================================================
+function toggleNotif(el) {
+  el.classList.toggle('on');
+  settings.notif15 = document.getElementById('toggle15').classList.contains('on');
+  settings.notifExact = document.getElementById('toggleExact').classList.contains('on');
+  localStorage.setItem('settings_v3', JSON.stringify(settings));
+}
+
+async function sendEmailViaFormspree(subject, message) {
+  const email = settings.email;
+  const formId = settings.formspreeId;
+
+  if (!email) { showToast('Напиши имейл в настройките!', 'error'); return false; }
+  if (!formId || formId === 'YOUR_FORM_ID') { showToast('Добави Formspree ID в настройките!', 'error'); return false; }
+
+  const url = `https://formspree.io/f/${formId}`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email,
+        _replyto: email,
+        _subject: subject,
+        message: message
+      })
+    });
+
+    if (res.ok) {
+      showToast('📧 Имейлът е изпратен!', 'success');
+      return true;
+    } else {
+      showToast('Грешка при изпращане. Провери Formspree ID.', 'error');
+      return false;
+    }
+  } catch (e) {
+    showToast('Мрежова грешка при изпращане.', 'error');
+    return false;
+  }
+}
+
+function sendTestEmail() {
+  const now = new Date().toLocaleTimeString('bg-BG');
+  sendEmailViaFormspree(
+    '✅ МедиАлерт — Тест',
+    `Здравей!\n\nТова е тест от МедиАлерт.\nВремето е: ${now}\n\nАко получиш това съобщение, известията работят правилно!\n\n— МедиАлерт`
+  );
+}
+
+let lastNotifCheck = {};
+
+function checkReminders() {
+  if (!settings.email || !settings.formspreeId || settings.formspreeId === 'YOUR_FORM_ID') return;
+
+  const now = new Date();
+  const activeMeds = medications.filter(m => m.active && !isExpired(m));
+
+  activeMeds.forEach(med => {
+    med.times.forEach(time => {
+      if (isTakenToday(med, time)) return;
+
+      const [h, m] = time.split(':').map(Number);
+      const medTime = new Date();
+      medTime.setHours(h, m, 0, 0);
+      const diff = medTime - now;
+      const key = `${med.id}_${time}_${getTodayKey()}`;
+
+      if (settings.notif15 && diff > 0 && diff <= 900000 && diff > 600000 && !lastNotifCheck[key + '_15']) {
+        lastNotifCheck[key + '_15'] = true;
+        sendEmailViaFormspree(
+          `⏰ МедиАлерт — ${med.name} след 15 мин.`,
+          `Напомняне!\n\nПредстои да вземеш:\n💊 ${med.name}\n🕐 Час: ${time}\n💊 Доза: ${med.dose}\n⏳ Остават около 15 минути!\n\n— МедиАлерт`
+        );
+      }
+
+      if (settings.notifExact && diff > -300000 && diff <= 300000 && !lastNotifCheck[key + '_exact']) {
+        lastNotifCheck[key + '_exact'] = true;
+        sendEmailViaFormspree(
+          `🔔 МедиАлерт — Вземи ${med.name} сега!`,
+          `Час за лекарство!\n\n💊 ${med.name}\n🕐 Час: ${time}\n💊 Доза: ${med.dose}\n${med.notes ? `📝 Бележка: ${med.notes}` : ''}\n\n— МедиАлерт`
+        );
+      }
+    });
+  });
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = msg;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'fadeOut 0.3s ease forwards';
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
+// ============================================================
+// Filter
+// ============================================================
+function filterMeds(type) {
+  renderAll();
+}
+
+// ============================================================
+// KEYBOARD
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+
+</body>
+</html>
